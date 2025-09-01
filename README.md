@@ -62,8 +62,6 @@ The calculation is based on a funny, playful logic:
 6. **Empty input check**
    - If either salary or name is missing, the result shows **“No data found 😅”** instead of calculating.
 
-> **Reminder:** This is only for fun. Love, care, respect, and trust are what truly matter ❤️
-
 ## Disclaimer
 
 This is just a fun project. The results don’t mean anything serious.
