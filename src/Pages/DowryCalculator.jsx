@@ -1,21 +1,27 @@
 import React, { useState } from "react";
-import Spinner from "./Spinner";
 
 const DowryCalculator = () => {
-  const [boyName, setBoyName] = useState("");
-  const [boyCtc, setBoyCtc] = useState("");
-  const [boyCtcUnit, setBoyCtcUnit] = useState("lakh");
-  const [boyAge, setBoyAge] = useState("");
-  const [boyNetWorth, setBoyNetWorth] = useState("");
-  const [boyNetWorthUnit, setBoyNetWorthUnit] = useState("lakh");
-  const [girlName, setGirlName] = useState("");
-  const [girlAge, setGirlAge] = useState("");
-  const [girlCtc, setGirlCtc] = useState("");
-  const [girlCtcUnit, setGirlCtcUnit] = useState("lakh");
-  const [girlNetWorth, setGirlNetWorth] = useState("");
-  const [girlNetWorthUnit, setGirlNetWorthUnit] = useState("lakh");
+  const [boyData, setBoyData] = useState({
+    name: "",
+    age: "",
+    salary: "",
+    salaryUnit: "lakh",
+    education: "10th",
+    job: "private",
+  });
+
+  const [girlData, setGirlData] = useState({
+    name: "",
+    age: "",
+    salary: "",
+    salaryUnit: "lakh",
+    education: "10th",
+    job: "private",
+  });
+
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showHow, setShowHow] = useState(false);
 
   const unitMultiplier = {
     thousand: 1000,
@@ -23,252 +29,396 @@ const DowryCalculator = () => {
     crore: 10000000,
   };
 
-  const convertToNumber = (value, unit) => {
-    return parseFloat(value) * unitMultiplier[unit];
-  };
+  const convertToNumber = (value, unit) =>
+    parseFloat(value || 0) * unitMultiplier[unit];
 
-  const formatResult = (value) => {
-    if (value >= 10000000) {
-      return `₹${(value / 10000000).toFixed(2)} Crore`;
-    } else if (value >= 100000) {
-      return `₹${(value / 100000).toFixed(2)} Lakh`;
-    } else if (value >= 1000) {
-      return `₹${(value / 1000).toFixed(2)} Thousand`;
-    }
-    return `₹${value.toFixed(2)}`;
+  const formatMoney = (value) => {
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)} Crore`;
+    if (value >= 100000) return `₹${(value / 100000).toFixed(1)} Lakh`;
+    if (value >= 1000) return `₹${(value / 1000).toFixed(0)} Thousand`;
+    return `₹${value.toFixed(0)}`;
   };
 
   const calculateDowry = () => {
     setLoading(true);
+
     setTimeout(() => {
-      const boyCtcValue = convertToNumber(boyCtc, boyCtcUnit);
-      const girlCtcValue = convertToNumber(girlCtc, girlCtcUnit);
+      const boySalary = convertToNumber(boyData.salary, boyData.salaryUnit);
+      const girlSalary = convertToNumber(girlData.salary, girlData.salaryUnit);
 
-      if (
-        boyName.toLowerCase() === "yash mishra" &&
-        girlName.toLowerCase() === "shweta choudhary"
-      ) {
-        setResult(
-          "Tujhe kya lagta hai Shweta 🥺 mai tere se Dowry lunga..... naa, kabhi naa"
-        );
-        setLoading(false);
-        return;
-      }
+      let giver = boySalary >= girlSalary ? "boy" : "girl";
+      let baseSalary = giver === "boy" ? boySalary : girlSalary;
 
-      if (girlCtcValue > boyCtcValue) {
-        setResult("Beta Tu Rahende 😂");
-        setLoading(false);
-        return;
-      }
+      let baseDowry = baseSalary * 0.4;
 
-      const minDowry = boyCtcValue / 2 + 100000;
-      const maxDowry = boyCtcValue / 2 + 500000;
+      const edu = giver === "boy" ? boyData.education : girlData.education;
+      if (edu === "12th") baseDowry *= 1.1;
+      else if (edu === "bachelor") baseDowry *= 1.3;
+      else if (edu === "master") baseDowry *= 1.5;
+      else if (edu === "phd") baseDowry *= 1.7;
+      else if (edu === "diploma") baseDowry *= 1.05;
+      else if (edu === "no-degree") baseDowry *= 0.9;
 
-      setResult(
-        `Minimum Dowry: ${formatResult(
-          minDowry
-        )}\nMaximum Dowry: ${formatResult(maxDowry)}`
-      );
+      const job = giver === "boy" ? boyData.job : girlData.job;
+      if (job === "doctor") baseDowry *= 1.6;
+      else if (job === "government") baseDowry *= 1.4;
+      else if (job === "engineer") baseDowry *= 1.2;
+      else if (job === "business") baseDowry *= 1.3;
+      else if (job === "startup") baseDowry *= 1.5;
+      else if (job === "artist") baseDowry *= 1.1;
+
+      const minDowry = Math.max(baseDowry * 0.7, 50000);
+      const maxDowry = baseDowry * 1.2;
+
+      setResult({
+        giver,
+        minAmount: minDowry,
+        maxAmount: maxDowry,
+      });
+
       setLoading(false);
     }, 2000);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-blue-400 p-6">
-      <h1 className="text-3xl font-bold mb-2 animate-bounce font-sans text-blue-900 text-center">
-        💸 Dowry (दहेज) Calculator 😂 💸
-      </h1>
-      <p className="text-center text-md font-bold text-blue-900 mb-5 mt-2 animate-bounce">
-        Boys can dream of dowry only if their CTC is higher than the girl's
-        CTC. Otherwise, sorry bro, you're just not worthy 😂💔
-      </p>
+  const resetForm = () => {
+    setResult(null);
+    setBoyData({
+      name: "",
+      age: "",
+      salary: "",
+      salaryUnit: "lakh",
+      education: "10th",
+      job: "private",
+    });
+    setGirlData({
+      name: "",
+      age: "",
+      salary: "",
+      salaryUnit: "lakh",
+      education: "10th",
+      job: "private",
+    });
+  };
 
-      {!loading && !result && (
-        <div className="bg-white shadow-md rounded-lg p-6 max-w-4xl w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-center text-blue-900">
-                Boy's Side
-              </h2>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Boy's Name & Surname
-                  </label>
-                  <input
-                    type="text"
-                    value={boyName}
-                    onChange={(e) => setBoyName(e.target.value)}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Boy's CTC/Package
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={boyCtc}
-                      onChange={(e) => setBoyCtc(e.target.value)}
-                      required
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-l-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    />
-                    <select
-                      value={boyCtcUnit}
-                      onChange={(e) => setBoyCtcUnit(e.target.value)}
-                      className="mt-1 block p-2 border border-gray-300 rounded-r-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    >
-                      <option value="thousand">Thousand</option>
-                      <option value="lakh">Lakh</option>
-                      <option value="crore">Crore</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Boy's Age
-                  </label>
-                  <input
-                    type="number"
-                    value={boyAge}
-                    onChange={(e) => setBoyAge(e.target.value)}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Boy's Net Worth
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={boyNetWorth}
-                      onChange={(e) => setBoyNetWorth(e.target.value)}
-                      required
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-l-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    />
-                    <select
-                      value={boyNetWorthUnit}
-                      onChange={(e) => setBoyNetWorthUnit(e.target.value)}
-                      className="mt-1 block p-2 border border-gray-300 rounded-r-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    >
-                      <option value="thousand">Thousand</option>
-                      <option value="lakh">Lakh</option>
-                      <option value="crore">Crore</option>
-                    </select>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-center text-blue-900">
-                Girl's Side
-              </h2>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Girl's Name & Surname
-                  </label>
-                  <input
-                    type="text"
-                    value={girlName}
-                    onChange={(e) => setGirlName(e.target.value)}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Girl's CTC/Package
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={girlCtc}
-                      onChange={(e) => setGirlCtc(e.target.value)}
-                      required
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-l-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    />
-                    <select
-                      value={girlCtcUnit}
-                      onChange={(e) => setGirlCtcUnit(e.target.value)}
-                      className="mt-1 block p-2 border border-gray-300 rounded-r-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    >
-                      <option value="thousand">Thousand</option>
-                      <option value="lakh">Lakh</option>
-                      <option value="crore">Crore</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Girl's Age
-                  </label>
-                  <input
-                    type="number"
-                    value={girlAge}
-                    onChange={(e) => setGirlAge(e.target.value)}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Girl's Net Worth
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={girlNetWorth}
-                      onChange={(e) => setGirlNetWorth(e.target.value)}
-                      required
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-l-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    />
-                    <select
-                      value={girlNetWorthUnit}
-                      onChange={(e) => setGirlNetWorthUnit(e.target.value)}
-                      className="mt-1 block p-2 border border-gray-300 rounded-r-md focus:outline-none focus:border-blue-400 bg-blue-100 hover:bg-blue-200 transition duration-300"
-                    >
-                      <option value="thousand">Thousand</option>
-                      <option value="lakh">Lakh</option>
-                      <option value="crore">Crore</option>
-                    </select>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div className="text-center mt-6">
-            <button
-              type="button"
-              onClick={calculateDowry}
-              className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
-            >
-              Calculate Dowry
-            </button>
-          </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-gray-700 text-center">
+          <div className="animate-spin border-4 border-gray-400 border-t-transparent rounded-full w-12 h-12 mx-auto mb-4"></div>
+          <p className="text-lg">Calculating the result... </p>
         </div>
-      )}
-      {loading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-          <Spinner />
-        </div>
-      )}
-      {!loading && result && (
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-blue-400 p-6">
-          <h2 className="text-2xl font-bold mb-4 text-center text-blue-900">
-            😁 Here is your answer 😂
+      </div>
+    );
+  }
+
+  if (result) {
+    const isDataEmpty =
+      !boyData.salary || !girlData.salary || !boyData.name || !girlData.name;
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-lg w-full border">
+          <h2 className="text-2xl font-bold text-pink-600 mb-4">
+            😂 Result is here
           </h2>
-          <div className="text-center text-lg font-bold p-4 bg-white rounded-md shadow-md max-w-lg w-full">
-            {result.split("\n").map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
+
+          {isDataEmpty ? (
+            <p className="text-gray-500 mb-6">No data found 😅</p>
+          ) : (
+            <>
+              <p className="mb-4 text-gray-600">
+                Whoever earns more has to give the money
+              </p>
+              <p className="text-xl font-bold text-red-500 mb-6">
+                {result.giver === "boy"
+                  ? "The Boy will pay 😂"
+                  : "The Girl will pay 😂"}
+              </p>
+
+              <div className="bg-pink-100 rounded-xl p-4 text-gray-800 mb-6">
+                <p>💰 Minimum Amount: {formatMoney(result.minAmount)}</p>
+                <p>💰 Maximum Amount: {formatMoney(result.maxAmount)}</p>
+              </div>
+            </>
+          )}
+
+          <p className="text-gray-500 text-sm mb-6">
+            (Remember: This is just a joke for fun, not serious)
+          </p>
+
+          <button
+            onClick={resetForm}
+            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg"
+          >
+            🔄 Calculate Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white p-6 font-sans">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">
+            😂 Comedy Dowry Calculator 😂{" "}
+          </h1>
+          <p className="text-gray-600">
+            This is a light-hearted project made just for fun. Marriage is about
+            ❤️ love, respect, and companionship.
+          </p>
+          <p className="text-gray-700 font-medium mb-2">
+            We use funny logic here: Whoever earns more has to give money.
+            <div>
+              {" "}
+              (If girl earns more → she gives, if boy earns more → he gives)
+            </div>
+          </p>
+        </div>
+
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6 text-sm leading-relaxed">
+          ⚠️ <strong>Important:</strong>
+          <ul className="list-disc ml-5 mt-2">
+            <li>This project is only for fun and entertainment.</li>
+            <li>
+              We follow a playful rule: The person earning more has to “pay”.
+            </li>
+            <li>
+              If the girl earns more → she will “pay”, if the boy earns more →
+              he will “pay”.
+            </li>
+            <li>Just enjoy and laugh, it’s all for comedy😂</li>
+          </ul>
+        </div>
+
+        {/* How It Works Section */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowHow(!showHow)}
+            className={`border px-4 py-2 rounded text-base font-semibold 
+                ${
+                  showHow
+                    ? "bg-green-300 text-white"
+                    : "bg-green-400 text-gray-800"
+                } 
+                hover:opacity-80 transition-colors`}
+          >
+            ℹ️ How it works? (Click to {showHow ? "hide" : "show"}👆)
+          </button>
+
+          {showHow && (
+            <div className="bg-gradient-to-r from-pink-100 via-yellow-100 to-green-100 p-4 rounded-lg mt-3 text-gray-800 text-sm leading-relaxed shadow-md">
+              <p>
+                💡 Step 1: We check the salaries of both the boy and the girl.
+              </p>
+              <p>
+                💡 Step 2: The person who earns more will “pay” a fun amount. 😄
+              </p>
+              <p>
+                🎓 Step 3: Education level affects the amount slightly (higher
+                education → bigger multiplier).
+              </p>
+              <p>
+                💼 Step 4: Certain professions like doctors, government jobs,
+                engineers, or startups can increase the amount further.
+              </p>
+              <p>
+                💰 Step 5: Finally, we show a fun range – minimum and maximum –
+                so you can laugh at the result.
+              </p>
+              <p className="mt-2 font-bold text-pink-600">
+                ⚠️ Note: This is just for fun.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-lg border grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-lg font-bold text-orange-500 mb-4">
+              👦 Boy's Info
+            </h2>
+            <input
+              type="text"
+              placeholder="Name"
+              className="w-full border p-2 mb-3 rounded"
+              value={boyData.name}
+              onChange={(e) => setBoyData({ ...boyData, name: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Age"
+              className="w-full border p-2 mb-3 rounded"
+              value={boyData.age}
+              onChange={(e) => setBoyData({ ...boyData, age: e.target.value })}
+            />
+            <div className="flex gap-2 mb-3">
+              <input
+                type="number"
+                placeholder="Per Month Salary"
+                className="flex-1 border p-2 rounded"
+                value={boyData.salary}
+                onChange={(e) =>
+                  setBoyData({ ...boyData, salary: e.target.value })
+                }
+              />
+              <select
+                value={boyData.salaryUnit}
+                onChange={(e) =>
+                  setBoyData({ ...boyData, salaryUnit: e.target.value })
+                }
+                className="border p-2 rounded"
+              >
+                <option value="thousand">Thousand</option>
+                <option value="lakh">Lakh</option>
+                <option value="crore">Crore</option>
+              </select>
+            </div>
+
+            <label className="block mb-1 font-medium text-gray-400">
+              Your Education
+            </label>
+            <select
+              className="w-full border p-2 mb-3 rounded"
+              value={boyData.education}
+              onChange={(e) =>
+                setBoyData({ ...boyData, education: e.target.value })
+              }
+            >
+              <option value="">Select Education</option>
+              <option value="no-degree">No Degree</option>
+              <option value="10th">10th</option>
+              <option value="12th">12th</option>
+              <option value="diploma">Diploma</option>
+              <option value="bachelor">Bachelor’s Degree</option>
+              <option value="master">Masters</option>
+              <option value="phd">PhD</option>
+            </select>
+
+            <label className="block mb-1 font-medium text-gray-400">
+              Your Profession
+            </label>
+            <select
+              className="w-full border p-2 rounded"
+              value={boyData.job}
+              onChange={(e) => setBoyData({ ...boyData, job: e.target.value })}
+            >
+              <option value="">Select Profession</option>
+              <option value="private">Private</option>
+              <option value="government">Government</option>
+              <option value="doctor">Doctor</option>
+              <option value="engineer">Engineer</option>
+              <option value="business">Business</option>
+              <option value="startup">Startup Founder</option>
+              <option value="artist">Artist</option>
+            </select>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-bold text-orange-500 mb-4">
+              👧 Girl's Info
+            </h2>
+            <input
+              type="text"
+              placeholder="Name"
+              className="w-full border p-2 mb-3 rounded"
+              value={girlData.name}
+              onChange={(e) =>
+                setGirlData({ ...girlData, name: e.target.value })
+              }
+            />
+            <input
+              type="number"
+              placeholder="Age"
+              className="w-full border p-2 mb-3 rounded"
+              value={girlData.age}
+              onChange={(e) =>
+                setGirlData({ ...girlData, age: e.target.value })
+              }
+            />
+            <div className="flex gap-2 mb-3">
+              <input
+                type="number"
+                placeholder="Per Month Salary"
+                className="flex-1 border p-2 rounded"
+                value={girlData.salary}
+                onChange={(e) =>
+                  setGirlData({ ...girlData, salary: e.target.value })
+                }
+              />
+              <select
+                value={girlData.salaryUnit}
+                onChange={(e) =>
+                  setGirlData({ ...girlData, salaryUnit: e.target.value })
+                }
+                className="border p-2 rounded"
+              >
+                <option value="thousand">Thousand</option>
+                <option value="lakh">Lakh</option>
+                <option value="crore">Crore</option>
+              </select>
+            </div>
+
+            <label className="block mb-1 font-medium text-gray-400">
+              Your Education
+            </label>
+            <select
+              className="w-full border p-2 mb-3 rounded"
+              value={girlData.education}
+              onChange={(e) =>
+                setGirlData({ ...girlData, education: e.target.value })
+              }
+            >
+              <option value="">Select Education</option>
+              <option value="no-degree">No Degree</option>
+              <option value="10th">10th</option>
+              <option value="12th">12th</option>
+              <option value="diploma">Diploma</option>
+              <option value="bachelor">Bachelor’s Degree</option>
+              <option value="master">Masters</option>
+              <option value="phd">PhD</option>
+            </select>
+
+            <label className="block mb-1 font-medium text-gray-400">
+              Your Profession
+            </label>
+            <select
+              className="w-full border p-2 rounded"
+              value={girlData.job}
+              onChange={(e) =>
+                setGirlData({ ...girlData, job: e.target.value })
+              }
+            >
+              <option value="">Select Profession</option>
+              <option value="private">Private</option>
+              <option value="government">Government</option>
+              <option value="doctor">Doctor</option>
+              <option value="engineer">Engineer</option>
+              <option value="business">Business</option>
+              <option value="startup">Startup Founder</option>
+              <option value="artist">Artist</option>
+            </select>
           </div>
         </div>
-      )}
+
+        <div className="text-center mt-6">
+          <button
+            onClick={calculateDowry}
+            className="bg-orange-400 hover:bg-yellow-500 text-white px-6 py-3 rounded-lg font-bold"
+          >
+            Calculate 😂
+          </button>
+        </div>
+
+        <div className="bg-gray-100 mt-6 p-4 rounded-lg text-center text-sm text-gray-600 leading-relaxed">
+          <strong>Note:</strong>
+          <p>
+            This is just a fun project. The results don’t mean anything serious.
+            Love, care, respect, and trust are what truly matter ❤️
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
